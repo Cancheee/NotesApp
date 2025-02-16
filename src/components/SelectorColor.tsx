@@ -1,4 +1,4 @@
-import * as React from "react";
+import {useEffect, useState} from "react";
 import {
   Select,
   SelectContent,
@@ -10,15 +10,31 @@ import {
 } from "@/components/ui/select";
 import { useDarkModeStore } from "../Store/DarkModeStore";
 import { useColorStore } from "../Store/ColorStore";
+import { load, Store } from '@tauri-apps/plugin-store';
+
+const store = await Store.load(".settings.dat");
 
 export function SelectColor() {
   const darkMode = useDarkModeStore((state) => state.darkMode);
   const setColor = useColorStore((state) => state.setColor);
-  const [selectedColor, setSelectedColor] = React.useState<string>("");
+  const [selectedColor, setSelectedColor] = useState<string>("");
 
-  const handleChange = (value: string) => {
+  useEffect(() => {
+    const loadColor = async () => {
+      const storedColor= await store.get<string>("appColor")
+      if (storedColor){
+        setColor(storedColor)
+        setSelectedColor(storedColor)
+      }
+    }
+    loadColor();
+  },[])
+
+  const handleChange = async (value: string) => {
     setSelectedColor(value);
     setColor(value);
+    await store.set("appColor", value);
+    await store.save();
   };
 
   return (
